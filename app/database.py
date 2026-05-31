@@ -3,11 +3,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
 
-# Get DATABASE_URL from Railway environment variable
-DATABASE_URL = os.getenv("postgresql://postgres:kPcQBTNSuFpUOGGADQekfWvNuohowHJN@ballast.proxy.rlwy.net:56249/railway")
+# Get DATABASE_URL from Railway Variables
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise Exception("❌ DATABASE_URL environment variable is not set!")
+
+print("✅ Using DATABASE_URL:", DATABASE_URL)   # For debugging
 
 # Create engine
 engine = create_engine(
