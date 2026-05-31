@@ -1,11 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import os
 
-# === TEMPORARY HARDCODED URL ===
-DATABASE_URL = "postgresql://postgres:kPcQBTNSuFpUOGGADQekfWvNuohowHJN@postgres.railway.internal:5432/railway"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-print("✅ Using hardcoded DATABASE_URL")
+if not DATABASE_URL:
+    raise Exception("❌ DATABASE_URL is not set!")
+
+print("🔗 Connecting with DATABASE_URL:", DATABASE_URL[:100] + "...")  # Print first 100 chars for debug
 
 engine = create_engine(
     DATABASE_URL,
