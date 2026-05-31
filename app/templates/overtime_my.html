@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">My Overtime Claims</h1>
+        <a href="/overtime/request" class="btn btn-primary">+ New Overtime Claim</a>
+    </div>
+
+    {% if rows %}
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Hours</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Replacement Days</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ot in rows %}
+                <tr>
+                    <td>{{ ot.id }}</td>
+                    <td>{{ ot.date }}</td>
+                    <td class="font-bold">{{ ot.hours }} hrs</td>
+                    <td class="max-w-md truncate">{{ ot.reason or '-' }}</td>
+                    <td>
+                        {% if ot.status.value == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                        {% elif ot.status.value == 'rejected' %}
+                            <span class="badge badge-error">Rejected</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="font-semibold text-primary">
+                        {% if ot.approved_hours %}
+                            {{ (ot.approved_hours / 8.0)|round(2) }} days
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-xl p-16 text-center">
+        <p class="text-2xl text-base-content/70">You haven't submitted any overtime claims yet.</p>
+        <a href="/overtime/request" class="btn btn-primary mt-6">Submit Your First Claim</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

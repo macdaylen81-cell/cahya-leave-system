@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>All Leave Requests (HR View)</h1>
+
+<div class="card">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Employee</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Reason</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for l in leaves %}
+        <tr>
+            <td>{{ l.id }}</td>
+            <td>{{ l.user.username }}</td>
+            <td>{{ l.start_date }}</td>
+            <td>{{ l.end_date }}</td>
+            <td>{{ l.reason }}</td>
+            <td>{{ l.status }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

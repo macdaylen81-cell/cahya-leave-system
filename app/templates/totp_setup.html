@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Two-Factor Authentication (TOTP)</h1>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<p>Scan this QR code with Google Authenticator, Authy, etc.</p>
+<p>Or manually enter secret: <code>{{ secret }}</code></p>
+<p>URI: <code>{{ provisioning_uri }}</code></p>
+<form method="post" action="/totp/enable" class="form">
+    <label>Enter code from app</label>
+    <input type="text" name="code" required>
+    <button type="submit">Enable 2FA</button>
+</form>
+{% endblock %}

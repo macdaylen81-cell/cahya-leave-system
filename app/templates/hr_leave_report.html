@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto p-6">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-bold">HR Leave Report</h1>
+            <p class="text-base-content/70">Generated on {{ generated_at }}</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="/reports/hr-leaves/export{% if start_date %}?start_date={{ start_date }}{% if end_date %}&end_date={{ end_date }}{% endif %}{% endif %}" 
+               class="btn btn-success">
+                📥 Export to Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Print / Save as PDF
+            </button>
+            <a href="/reports/hr-leaves" class="btn btn-ghost">🔄 Refresh</a>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <form method="get" class="flex gap-4 items-end flex-wrap">
+                <div>
+                    <label class="label"><span class="label-text">From Date</span></label>
+                    <input type="date" name="start_date" value="{{ start_date }}" class="input input-bordered">
+                </div>
+                <div>
+                    <label class="label"><span class="label-text">To Date</span></label>
+                    <input type="date" name="end_date" value="{{ end_date }}" class="input input-bordered">
+                </div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="/reports/hr-leaves" class="btn btn-ghost">Clear Filter</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="stat bg-base-100 shadow rounded-2xl p-6">
+            <div class="stat-title">Total Requests</div>
+            <div class="stat-value text-4xl">{{ total }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow rounded-2xl p-6">
+            <div class="stat-title text-warning">Pending</div>
+            <div class="stat-value text-4xl text-warning">{{ pending }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow rounded-2xl p-6">
+            <div class="stat-title text-success">Approved</div>
+            <div class="stat-value text-4xl text-success">{{ approved }}</div>
+        </div>
+        <div class="stat bg-base-100 shadow rounded-2xl p-6">
+            <div class="stat-title text-error">Rejected</div>
+            <div class="stat-value text-4xl text-error">{{ rejected }}</div>
+        </div>
+    </div>
+
+    <!-- Detailed Table -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for leave in leaves %}
+                        <tr>
+                            <td>{{ leave.user.username }}</td>
+                            <td><span class="badge">{{ leave.leave_type.value|title }}</span></td>
+                            <td>{{ leave.start_date }}</td>
+                            <td>{{ leave.end_date }}</td>
+                            <td class="font-bold">{{ (leave.end_date - leave.start_date).days + 1 }}</td>
+                            <td>
+                                {% if leave.status.value == 'approved' %}
+                                    <span class="badge badge-success">Approved</span>
+                                {% elif leave.status.value == 'rejected' %}
+                                    <span class="badge badge-error">Rejected</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="max-w-xs truncate">{{ leave.reason }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+    @media print {
+        .navbar, .btn, .alert, form, .max-w-7xl > div:first-child {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+            color: black !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ccc;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #666;
+            padding: 8px;
+            text-align: left;
+        }
+    }
+</style>
+
+{% endblock %}

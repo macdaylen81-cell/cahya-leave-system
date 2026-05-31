@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h1 class="card-title text-3xl mb-6">Request New Leave</h1>
+
+            <!-- ERROR MESSAGE -->
+            {% if request.query_params.get('error') %}
+            <div class="alert alert-error mb-6 shadow-lg">
+                <span>{{ request.query_params.get('error') | replace('+', ' ') }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Balance Info -->
+            <div class="alert alert-info mb-8">
+                <strong>Your Annual Leave Balance:</strong> 
+                {{ user.annual_leave_quota - (user.used_annual_leave or 0) }} days remaining
+            </div>
+
+            <form method="post" action="/leave/request" class="space-y-6">
+
+                <div>
+                    <label class="label">
+                        <span class="label-text font-medium">Leave Type</span>
+                    </label>
+                    <select name="leave_type" class="select select-bordered w-full" required>
+                        <option value="annual">Annual Leave</option>
+                        <option value="sick">Sick Leave</option>
+                        <option value="emergency">Emergency Leave</option>
+                        <option value="replacement">Replacement Leave</option>
+                        <option value="maternity">Maternity Leave</option>
+                        <option value="unpaid">Unpaid Leave</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-medium">Start Date</span>
+                        </label>
+                        <input type="date" name="start_date" id="start_date" class="input input-bordered w-full" required>
+                    </div>
+
+                    <div>
+                        <label class="label">
+                            <span class="label-text font-medium">End Date</span>
+                        </label>
+                        <input type="date" name="end_date" id="end_date" class="input input-bordered w-full" required>
+                    </div>
+                </div>
+
+                <!-- Prominent Days Count -->
+                <div class="bg-base-200 p-4 rounded-xl text-center">
+                    <p class="text-sm text-base-content/70">Working Days Taken (Mon-Fri only)</p>
+                    <p id="days_display" class="text-4xl font-bold text-primary">0</p>
+                    <input type="hidden" id="days" name="days">
+                </div>
+
+                <div>
+                    <label class="label">
+                        <span class="label-text font-medium">Reason</span>
+                    </label>
+                    <textarea name="reason" class="textarea textarea-bordered w-full h-32" 
+                              placeholder="Please explain your reason..." required></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="btn btn-primary flex-1 text-lg">
+                        Submit Leave Request
+                    </button>
+                    <a href="/leave/" class="btn btn-ghost flex-1">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== WORKING DAYS CALCULATOR ==================== -->
+<script>
+    function calculateWorkingDays() {
+        const start = document.getElementById('start_date').value;
+        const end = document.getElementById('end_date').value;
+        
+        if (!start || !end) {
+            document.getElementById('days_display').textContent = '0';
+            document.getElementById('days').value = '0';
+            return;
+        }
+
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        let count = 0;
+        let current = new Date(startDate);
+
+        while (current <= endDate) {
+            const dayOfWeek = current.getDay();
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) { 
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        document.getElementById('days_display').textContent = count;
+        document.getElementById('days').value = count;
+    }
+
+    document.getElementById('start_date').addEventListener('change', calculateWorkingDays);
+    document.getElementById('end_date').addEventListener('change', calculateWorkingDays);
+</script>
+
+{% endblock %}

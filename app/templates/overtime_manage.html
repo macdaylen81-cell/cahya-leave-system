@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Manage Overtime Claims</h1>
+    </div>
+
+    {% if rows %}
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Hours Requested</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ot in rows %}
+                <tr>
+                    <td>{{ ot.id }}</td>
+                    <td>{{ ot.user.username }}</td>
+                    <td>{{ ot.date }}</td>
+                    <td class="font-bold">{{ ot.hours }} hrs</td>
+                    <td class="max-w-md truncate">{{ ot.reason or '-' }}</td>
+                    <td>
+                        {% if ot.status.value == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                        {% elif ot.status.value == 'rejected' %}
+                            <span class="badge badge-error">Rejected</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ot.status.value == 'pending' %}
+                            <form method="post" action="/overtime/{{ ot.id }}/approve" style="display:inline;">
+                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                            </form>
+                            <form method="post" action="/overtime/{{ ot.id }}/reject" style="display:inline;">
+                                <button type="submit" class="btn btn-error btn-sm">Reject</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-xl p-16 text-center">
+        <p class="text-2xl text-base-content/70">No overtime claims to manage.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

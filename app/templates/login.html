@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cahya Mata Intelligence Leave System</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center">
+
+    <div class="card w-full max-w-md shadow-2xl bg-base-100 overflow-hidden">
+        
+        <!-- Company Banner -->
+        <div class="h-48 bg-cover bg-center relative" 
+             style="background-image: url('/static/Cahya_Mata_Logo.png');">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70"></div>
+            <div class="absolute bottom-4 left-6 text-white">
+                <h1 class="text-3xl font-bold">Cahya Mata Intelligence</h1>
+                <p class="text-sm opacity-90">Leave Management System</p>
+            </div>
+        </div>
+
+        <div class="card-body p-8">
+            {% if error %}
+            <div class="alert alert-error mb-6">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="/login">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Username</span></label>
+                    <input type="text" name="username" class="input input-bordered" required />
+                </div>
+
+                <div class="form-control mt-4">
+                    <label class="label"><span class="label-text font-medium">Password</span></label>
+                    <input type="password" name="password" class="input input-bordered" required />
+                </div>
+
+                <div class="form-control mt-4">
+                    <label class="label"><span class="label-text font-medium">TOTP Code (if 2FA enabled)</span></label>
+                    <input type="text" name="totp_code" placeholder="123456" class="input input-bordered" />
+                </div>
+
+                {% if recaptcha_site_key %}
+                <div class="mt-6 flex justify-center">
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary w-full mt-8 text-lg font-medium">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="text-center mt-6 text-xs text-base-content/60">
+                Default Admin: <strong>admin</strong> / <strong>admin123</strong>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

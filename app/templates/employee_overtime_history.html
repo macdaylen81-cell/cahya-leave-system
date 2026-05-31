@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold">Overtime Claim History</h1>
+            <p class="text-lg">
+                Employee: <strong>{{ employee.username }}</strong> 
+                ({{ employee.role.value }})
+            </p>
+        </div>
+        <a href="/overtime/manage" class="btn btn-ghost">← Back to Manage Overtime</a>
+    </div>
+
+    {% if history %}
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Hours</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for r in history %}
+                <tr>
+                    <td>{{ r.id }}</td>
+                    <td>{{ r.date }}</td>
+                    <td class="font-semibold">{{ r.hours }} hours</td>
+                    <td class="max-w-md truncate">{{ r.reason or '-' }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if r.status == 'approved' %}badge-success
+                            {% elif r.status == 'rejected' %}badge-error
+                            {% else %}badge-warning{% endif %}">
+                            {{ r.status | title }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-xl p-16 text-center">
+        <p class="text-2xl text-base-content/70">This employee has no overtime claims yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

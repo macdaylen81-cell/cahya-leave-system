@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto pt-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-4xl font-bold">🇲🇾 Malaysia Public Holidays</h1>
+        <div class="flex gap-3">
+            <form method="post" action="/holidays/seed-default">
+                <button type="submit" class="btn btn-success">🌱 Seed Default 2026 Holidays</button>
+            </form>
+            <a href="/holidays/" class="btn btn-ghost">Refresh</a>
+        </div>
+    </div>
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error mb-6">{{ request.query_params.get('error') | replace('+', ' ') }}</div>
+    {% endif %}
+
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success mb-6">{{ request.query_params.get('success') | replace('+', ' ') }}</div>
+    {% endif %}
+
+    <!-- Add New Holiday -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <h2 class="card-title mb-4">Add New Holiday</h2>
+            <form method="post" action="/holidays/add" class="flex gap-4 items-end flex-wrap">
+                <input type="date" name="holiday_date" class="input input-bordered" required>
+                <input type="text" name="name" placeholder="e.g. Hari Raya Aidilfitri" 
+                       class="input input-bordered flex-1 min-w-[250px]" required>
+                <button type="submit" class="btn btn-primary">Add Holiday</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Holiday List -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Holiday Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for h in holidays %}
+                    <tr>
+                        <td class="font-medium">{{ h.date }}</td>
+                        <td>{{ h.name }}</td>
+                        <td>
+                            <form method="post" action="/holidays/{{ h.id }}/delete" style="display:inline;">
+                                <button type="submit" class="btn btn-error btn-sm"
+                                        onclick="return confirm('Delete {{ h.name }}?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not holidays %}
+            <p class="text-center text-base-content/60 py-12">No holidays added yet. Click "Seed Default 2026 Holidays" above.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

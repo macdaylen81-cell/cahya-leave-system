@@ -1,0 +1,271 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+  margin: 0;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+.navbar {
+  background: #111827;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav-left a,
+.nav-right a {
+  color: #e5e7eb;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-left a:hover,
+.nav-right a:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.nav-user,
+.nav-right span {
+  font-size: 13px;
+  color: #cbd5f5;
+}
+
+/* Logout button */
+.btn-logout {
+  background: #ef4444;
+  color: #ffffff !important;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.btn-logout:hover {
+  background: #dc2626;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+.container {
+  max-width: 1000px;
+  margin: 24px auto;
+  padding: 0 16px 40px;
+}
+
+/* =========================
+   CARDS / GRID
+========================= */
+.card {
+  background: white;
+  padding: 20px 22px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.12);
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 26px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.big-number {
+  font-size: 36px;
+  font-weight: 700;
+  margin-top: 10px;
+  color: #2563eb;
+}
+
+/* =========================
+   TABLES
+========================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15,23,42,0.08);
+  font-size: 14px;
+}
+
+thead {
+  background: #f9fafb;
+}
+
+th, td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+button,
+.button {
+  display: inline-block;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9999px;
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.05s;
+}
+
+button:hover,
+.button:hover {
+  background: #1d4ed8;
+  box-shadow: 0 3px 10px rgba(37,99,235,0.45);
+  transform: translateY(-1px);
+}
+
+button.danger {
+  background: #dc2626;
+}
+
+button.danger:hover {
+  background: #b91c1c;
+}
+
+/* =========================
+   FORMS (GENERAL)
+========================= */
+.form label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form input,
+.form textarea,
+.form select {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* =========================
+   ALERTS / NOTES
+========================= */
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.note {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 10px;
+}
+
+/* =========================
+   LOGIN PAGE (SMALL CENTER CARD)
+   Only applies when <body class="centered">
+========================= */
+body.centered {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6fb;
+  margin: 0;
+}
+
+/* make login card smaller + centered */
+body.centered .card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+}
+
+/* login title smaller and centered */
+body.centered .card h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+/* login button full width */
+body.centered .form button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  margin-top: 14px;
+}
+
+/* Recaptcha scale slightly smaller */
+body.centered .g-recaptcha {
+  transform: scale(0.95);
+  transform-origin: 0 0;
+}
+

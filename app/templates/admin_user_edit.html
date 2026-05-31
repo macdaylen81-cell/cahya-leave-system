@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl mx-auto pt-8">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h1 class="card-title text-3xl mb-8">Edit User #{{ edit_user.id }}</h1>
+
+            {% if request.query_params.get('error') %}
+            <div class="alert alert-error mb-6">
+                {{ request.query_params.get('error') | replace('+', ' ') }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="/users/{{ edit_user.id }}/update" class="space-y-6">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Username -->
+                    <div>
+                        <label class="label"><span class="label-text font-medium">Username</span></label>
+                        <input type="text" name="username" value="{{ edit_user.username }}" 
+                               class="input input-bordered w-full" required>
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="label"><span class="label-text font-medium">Email (Gmail only)</span></label>
+                        <input type="email" name="email" value="{{ edit_user.email }}" 
+                               class="input input-bordered w-full" required>
+                    </div>
+
+                    <!-- New Password -->
+                    <div>
+                        <label class="label"><span class="label-text font-medium">New Password (Temporary)</span></label>
+                        <input type="password" name="password" 
+                               class="input input-bordered w-full" 
+                               placeholder="Leave blank to keep current password">
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <label class="label"><span class="label-text font-medium">Role</span></label>
+                        <select name="role" class="select select-bordered w-full">
+                            <option value="employee" {% if edit_user.role.value == 'employee' %}selected{% endif %}>Employee</option>
+                            <option value="manager" {% if edit_user.role.value == 'manager' %}selected{% endif %}>Manager</option>
+                            <option value="hr" {% if edit_user.role.value == 'hr' %}selected{% endif %}>HR</option>
+                            <option value="admin" {% if edit_user.role.value == 'admin' %}selected{% endif %}>Admin</option>
+                        </select>
+                    </div>
+
+                    <!-- Active -->
+                    <div class="flex items-center gap-3 pt-6">
+                        <input type="checkbox" name="is_active" class="toggle toggle-primary" 
+                               {% if edit_user.is_active %}checked{% endif %}>
+                        <span class="label-text font-medium">Active Account</span>
+                    </div>
+
+                    <!-- Force Password Reset -->
+                    <div class="flex items-center gap-3 pt-6">
+                        <input type="checkbox" name="force_password_reset" class="checkbox checkbox-primary" checked>
+                        <span class="label-text font-medium">Force user to change password on next login</span>
+                    </div>
+
+                    <!-- Annual Leave Quota -->
+                    <div>
+                        <label class="label"><span class="label-text font-medium">Annual Leave Quota (days)</span></label>
+                        <input type="number" name="annual_leave_quota" value="{{ edit_user.annual_leave_quota or 20 }}" 
+                               class="input input-bordered w-full" min="1" required>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 pt-8">
+                    <button type="submit" class="btn btn-primary flex-1">💾 Save Changes</button>
+                    <a href="/users/" class="btn btn-ghost flex-1">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

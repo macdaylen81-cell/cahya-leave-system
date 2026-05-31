@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">My Leave History</h1>
+        <a href="/leave/request" class="btn btn-primary">+ New Leave Request</a>
+    </div>
+
+    {% if leaves %}
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <table class="table table-zebra w-full">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Working Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for l in leaves %}
+            <tr>
+                <td class="font-medium">{{ l.id }}</td>
+                <td>{{ l.start_date }}</td>
+                <td>{{ l.end_date }}</td>
+                <!-- Show working days if calculated, else fallback -->
+                <td class="font-semibold text-primary">
+                    {{ l.display_days if l.display_days is defined else (l.end_date - l.start_date).days + 1 }}
+                </td>
+                <td class="max-w-md truncate">{{ l.reason }}</td>
+                <td>
+                    <span class="badge 
+                        {% if l.status.value == 'approved' %}badge-success
+                        {% elif l.status.value == 'rejected' %}badge-error
+                        {% else %}badge-warning{% endif %}">
+                        {{ l.status.value | title }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-xl p-16 text-center">
+        <p class="text-2xl text-base-content/70">You haven't made any leave requests yet.</p>
+        <a href="/leave/request" class="btn btn-primary mt-6">Request Your First Leave</a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

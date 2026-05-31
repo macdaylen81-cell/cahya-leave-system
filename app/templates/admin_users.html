@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold">Manage Users</h1>
+        <a href="/users/" class="btn btn-primary">+ Create New User</a>
+    </div>
+
+    <!-- ERROR MESSAGE DISPLAY -->
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error mb-6 shadow-lg">
+        {{ request.query_params.get('error') | replace('+', ' ') }}
+    </div>
+    {% endif %}
+
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>2FA</th>
+                        <th>Status</th>
+                        <th>Quota</th>
+                        <th>Used</th>
+                        <th>Remaining</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="font-medium">{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td class="text-sm">{{ u.email }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if u.role.value == 'admin' %}badge-error
+                            {% elif u.role.value == 'manager' %}badge-warning
+                            {% elif u.role.value == 'hr' %}badge-info
+                            {% else %}badge-neutral{% endif %}">
+                            {{ u.role.value | title }}
+                        </span>
+                    </td>
+                    <td>{{ "✅ ON" if u.is_totp_enabled else "OFF" }}</td>
+                    <td>
+                        <span class="badge {% if u.is_active %}badge-success{% else %}badge-error{% endif %}">
+                            {{ "Active" if u.is_active else "Inactive" }}
+                        </span>
+                    </td>
+                    <td>{{ summary[u.id]['quota'] }}</td>
+                    <td class="text-orange-600">{{ summary[u.id]['used'] }}</td>
+                    <td class="font-semibold">{{ summary[u.id]['remaining'] }}</td>
+                    <td>
+                        <a href="/users/{{ u.id }}/edit" class="btn btn-sm btn-ghost">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create User Form -->
+    <div class="card bg-base-100 shadow-xl mt-8">
+        <div class="card-body">
+            <h2 class="card-title mb-6">Create New User</h2>
+            <form method="post" action="/users/create" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="label"><span class="label-text">Username</span></label>
+                    <input type="text" name="username" class="input input-bordered w-full" required>
+                </div>
+                <div>
+                    <label class="label"><span class="label-text">Email (Gmail only)</span></label>
+                    <input type="email" name="email" class="input input-bordered w-full" required>
+                </div>
+                <div>
+                    <label class="label"><span class="label-text">Password</span></label>
+                    <input type="password" name="password" class="input input-bordered w-full" required>
+                </div>
+                <div>
+                    <label class="label"><span class="label-text">Role</span></label>
+                    <select name="role" class="select select-bordered w-full">
+                        <option value="employee">Employee</option>
+                        <option value="manager">Manager</option>
+                        <option value="hr">HR</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2 mt-4">
+                    <button type="submit" class="btn btn-primary w-full">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

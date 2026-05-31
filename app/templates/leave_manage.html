@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Manage Leave Applications</h1>
+
+    {% if pending %}
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for l in pending %}
+                    <tr>
+                        <td class="font-medium">{{ l.id }}</td>
+                        <td>
+                            <a href="/leave/employee/{{ l.user.id }}/history" class="link link-primary font-medium">
+                                {{ l.user.username }}
+                            </a>
+                        </td>
+                        <td>{{ l.leave_type.value | title }}</td>
+                        <td>{{ l.start_date }}</td>
+                        <td>{{ l.end_date }}</td>
+                        <td class="font-semibold">{{ (l.end_date - l.start_date).days + 1 }}</td>
+                        <td class="max-w-xs truncate">{{ l.reason }}</td>
+                        <td class="space-x-3">
+                            <form method="post" action="/leave/approve/{{ l.id }}" style="display:inline;">
+                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                            </form>
+                            <form method="post" action="/leave/reject/{{ l.id }}" style="display:inline;">
+                                <input type="text" name="reason" placeholder="Reason" class="input input-bordered input-sm w-64" required>
+                                <button type="submit" class="btn btn-error btn-sm">Reject</button>
+                            </form>
+                            <a href="/leave/employee/{{ l.user.id }}/history" class="btn btn-ghost btn-sm">View History</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-xl p-16 text-center">
+        <p class="text-2xl text-base-content/70">No pending leave requests 🎉</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

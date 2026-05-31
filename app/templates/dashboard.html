@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8">Welcome back, {{ user.username }} 👋</h1>
+
+    <!-- Leave Balance -->
+    <div class="card bg-base-100 shadow-xl mb-8">
+        <div class="card-body">
+            <h2 class="card-title mb-6">My Leave Balance</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <p class="text-sm text-base-content/70">Annual Leave</p>
+                    <p class="text-5xl font-bold text-primary">
+                        {{ user.annual_leave_quota - (user.used_annual_leave or 0) }}
+                        <span class="text-xl font-normal text-base-content/60">/ {{ user.annual_leave_quota }} days left</span>
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-base-content/70">Replacement Leave</p>
+                    <p class="text-5xl font-bold text-success">{{ user.replacement_leave_balance or 0 }} days</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-xl text-center">
+            <div class="card-body">
+                <div class="text-6xl mb-3">⏳</div>
+                <h2 class="text-xl font-semibold">Pending</h2>
+                <div class="text-6xl font-bold text-blue-600">{{ my_pending or 0 }}</div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl text-center">
+            <div class="card-body">
+                <div class="text-6xl mb-3">✅</div>
+                <h2 class="text-xl font-semibold">Approved</h2>
+                <div class="text-6xl font-bold text-green-600">{{ my_approved or 0 }}</div>
+            </div>
+        </div>
+
+        {% if pending is not none %}
+        <div class="card bg-base-100 shadow-xl text-center">
+            <div class="card-body">
+                <div class="text-6xl mb-3">👥</div>
+                <h2 class="text-xl font-semibold">Team Pending</h2>
+                <div class="text-6xl font-bold text-orange-600">{{ pending }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

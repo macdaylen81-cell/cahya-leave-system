@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Cahya Mata Intelligence Leave Management System" }}</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+    <script>
+        tailwind.config = {
+            content: ["./**/*.html"],
+            plugins: [require("daisyui")],
+        }
+    </script>
+</head>
+<body class="bg-base-200 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="navbar bg-base-100 shadow-lg">
+        <div class="navbar-start">
+            <a href="/" class="btn btn-ghost text-2xl font-bold">🏢 Cahya Mata Intelligence</a>
+        </div>
+        
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 gap-2">
+                <li><a href="/" class="font-medium">Dashboard</a></li>
+                <li><a href="/leave/" class="font-medium">My Leaves</a></li>
+                <li><a href="/leave/request" class="font-medium">Request Leave</a></li>
+                <li><a href="/overtime/" class="font-medium">My Overtime</a></li>
+                
+                {% if user and (user.role in ['manager', 'admin']) %}
+                <li><a href="/leave/manage" class="font-medium">Manage Leaves</a></li>
+                <li><a href="/overtime/manage" class="font-medium">Manage Overtime</a></li>
+                {% endif %}
+
+                {% if user and user.role == 'admin' %}
+                <li><a href="/users/" class="font-medium">👥 Manage Users</a></li>
+                {% endif %}
+
+                <!-- HR Reports -->
+                {% if user and (user.role in ['hr', 'admin']) %}
+                <li><a href="/holidays/" class="font-medium">🎉 Holidays</a></li>
+                <li><a href="/reports/hr-leaves" class="font-medium">📊 HR Reports</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="navbar-end gap-4 pr-6">
+            {% if user %}
+            <div class="flex items-center gap-3">
+                <span class="text-sm">{{ user.username }}</span>
+                <span class="badge badge-primary">{{ user.role.value }}</span>
+                <a href="/logout" class="btn btn-error btn-sm">Logout</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto p-8">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

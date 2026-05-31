@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h1>Notifications</h1>
+
+  <form method="post" action="/notifications/read-all" style="margin-bottom: 12px;">
+    <button type="submit">Mark all as read</button>
+  </form>
+
+  {% if not items %}
+    <p>No notifications yet.</p>
+  {% else %}
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Title</th>
+          <th>Message</th>
+          <th>Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for n in items %}
+        <tr>
+          <td>{% if n.is_read %}Read{% else %}<b>Unread</b>{% endif %}</td>
+          <td>{{ n.title }}</td>
+          <td>
+            {{ n.message }}
+            {% if n.link %}
+              <div><a href="{{ n.link }}">Open</a></div>
+            {% endif %}
+          </td>
+          <td>{{ n.created_at }}</td>
+          <td>
+            {% if not n.is_read %}
+            <form method="post" action="/notifications/{{ n.id }}/read">
+              <button type="submit">Mark read</button>
+            </form>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

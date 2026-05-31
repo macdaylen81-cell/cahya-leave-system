@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl mx-auto">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h1 class="card-title text-3xl mb-6">Request Overtime</h1>
+
+            {% if request.query_params.get('error') %}
+            <div class="alert alert-error mb-6">
+                {{ request.query_params.get('error') | replace('+', ' ') }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="/overtime/request" class="space-y-6">
+
+                <div>
+                    <label class="label"><span class="label-text font-medium">Date</span></label>
+                    <input type="date" name="date_str" class="input input-bordered w-full" required>
+                </div>
+
+                <div>
+                    <label class="label"><span class="label-text font-medium">Hours Worked</span></label>
+                    <input type="number" name="hours" step="0.5" min="0.5" max="12" 
+                           class="input input-bordered w-full" placeholder="e.g. 4.5" required>
+                    <p class="text-xs text-base-content/60 mt-1">Maximum 12 hours per day</p>
+                </div>
+
+                <div>
+                    <label class="label"><span class="label-text font-medium">Reason</span></label>
+                    <textarea name="reason" class="textarea textarea-bordered w-full h-32" 
+                              placeholder="Explain why you worked overtime..." required></textarea>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="btn btn-primary flex-1">Submit Overtime Claim</button>
+                    <a href="/overtime/" class="btn btn-ghost flex-1">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
