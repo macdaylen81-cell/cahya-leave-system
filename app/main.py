@@ -51,36 +51,21 @@ async def force_password_change_middleware(request: Request, call_next):
 
 # ====================== DASHBOARD (FINAL FIXED) ======================
 @app.get("/")
-def dashboard(
-    request: Request, 
-    db: Session = Depends(get_db)
-):
-    # Try to get current user safely
-    try:
-        user = get_current_user(request=request, db=db)
-    except:
-        user = None
-
-    # Redirect to login if not authenticated
+def dashboard(request: Request, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
-    # Force password change if needed
-    if getattr(user, 'must_change_password', False):
-        return RedirectResponse(url="/change-password", status_code=303)
-
-    # Normal dashboard
     pending = None
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending = db.query(models.LeaveRequest).filter(
             models.LeaveRequest.status == models.LeaveStatusEnum.pending
         ).count()
-    
+
     my_pending = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.user_id == user.id,
         models.LeaveRequest.status == models.LeaveStatusEnum.pending,
     ).count()
-    
+
     my_approved = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.user_id == user.id,
         models.LeaveRequest.status == models.LeaveStatusEnum.approved,
