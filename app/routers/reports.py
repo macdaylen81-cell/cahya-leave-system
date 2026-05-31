@@ -72,12 +72,12 @@ def export_hr_report(
         data.append({
             "Employee": l.user.username if l.user else "Unknown",
             "Email": l.user.email if l.user else "",
-            "Leave Type": l.leave_type.value.title() if l.leave_type else "",
+            "Leave Type": l.leave_type.value.title() if hasattr(l, 'leave_type') and l.leave_type else "N/A",
             "Start Date": l.start_date,
             "End Date": l.end_date,
-            "Days": (l.end_date - l.start_date).days + 1,
-            "Status": l.status.value.title(),
-            "Reason": l.reason,
+            "Days": (l.end_date - l.start_date).days + 1 if l.end_date and l.start_date else 0,
+            "Status": l.status.value.title() if hasattr(l, 'status') and l.status else "N/A",
+            "Reason": l.reason or "",
         })
 
     df = pd.DataFrame(data)
