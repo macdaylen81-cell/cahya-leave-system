@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     SMTP_FROM_EMAIL: str = ""
     SMTP_FROM_NAME: str = "Cahya Leave System"
+    BREVO_API_KEY: str = ""
 
     # reCAPTCHA
     RECAPTCHA_SITE_KEY: str = ""

@@ -1,8 +1,7 @@
 from fastapi import BackgroundTasks
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from .config import settings
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 
 def send_email_background(background_tasks: BackgroundTasks, email_to: str, subject: str, html: str):
@@ -11,32 +10,31 @@ def send_email_background(background_tasks: BackgroundTasks, email_to: str, subj
 
 def send_email(email_to: str, subject: str, html: str):
     try:
-        print(f"📧 Attempting to send email to: {email_to}")
-        print(f"📧 Subject: {subject}")
+        configuration = sib_api_v3_sdk.Configuration()
+        configuration.api_key["api-key"] = settings.BREVO_API_KEY
 
-        smtp_host = settings.SMTP_HOST
-        smtp_port = int(settings.SMTP_PORT)
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+            sib_api_v3_sdk.ApiClient(configuration)
+        )
 
-        msg = MIMEMultipart()
-        msg["From"] = settings.SMTP_FROM_EMAIL
-        msg["To"] = email_to
-        msg["Subject"] = subject
-        msg.attach(MIMEText(html, "html"))
+        email = sib_api_v3_sdk.SendSmtpEmail(
+            sender={
+                "name": settings.SMTP_FROM_NAME,
+                "email": settings.SMTP_FROM_EMAIL,
+            },
+            to=[{"email": email_to}],
+            subject=subject,
+            html_content=html,
+        )
 
-        print(f"📧 Connecting to SMTP server: {smtp_host}:{smtp_port}")
-        print(f"📧 SMTP Login: {settings.SMTP_USERNAME}")
-        print(f"📧 From Email: {settings.SMTP_FROM_EMAIL}")
-
-        server = smtplib.SMTP(smtp_host, smtp_port, timeout=30)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        api_instance.send_transac_email(email)
 
         print(f"✅ SUCCESS: Email sent to {email_to}")
         return True
+
+    except ApiException as e:
+        print(f"❌ BREVO API ERROR: {e}")
+        return False
 
     except Exception as e:
         print(f"❌ EMAIL FAILED to {email_to}")

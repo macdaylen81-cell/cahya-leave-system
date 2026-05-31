@@ -40,3 +40,4 @@ typing_extensions==4.15.0
 tzdata==2026.2
 urllib3==2.6.2
 uvicorn==0.40.0
+sib-api-v3-sdk
