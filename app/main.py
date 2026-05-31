@@ -47,7 +47,6 @@ async def force_password_change_middleware(request: Request, call_next):
         try:
             db = next(get_db())
             user = get_current_user(request=request, db=db)
-            
             if user and getattr(user, 'must_change_password', False):
                 return RedirectResponse(url="/change-password", status_code=303)
         except:
@@ -56,19 +55,19 @@ async def force_password_change_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ====================== DASHBOARD ======================
+# ====================== DASHBOARD (Fixed) ======================
 @app.get("/")
 def dashboard(
     request: Request, 
     db: Session = Depends(get_db), 
-    user: models.User = Depends(get_current_user)
+    user = Depends(get_current_user)   # Removed type hint to avoid exception
 ):
     # Redirect to login if not authenticated
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
     # Force password change if needed
-    if user.must_change_password:
+    if getattr(user, 'must_change_password', False):
         return RedirectResponse(url="/change-password", status_code=303)
 
     # Normal dashboard
