@@ -34,13 +34,7 @@ app.include_router(holidays.router)
 # ====================== GLOBAL FORCE PASSWORD CHANGE MIDDLEWARE ======================
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    if request.url.path in [
-        "/login", 
-        "/change-password", 
-        "/init-admin", 
-        "/static",
-        "/favicon.ico"
-    ]:
+    if request.url.path in ["/login", "/change-password", "/init-admin", "/static", "/favicon.ico"]:
         return await call_next(request)
 
     if "session" in request.cookies:
@@ -55,13 +49,18 @@ async def force_password_change_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ====================== DASHBOARD (Fixed) ======================
+# ====================== DASHBOARD (FINAL FIXED) ======================
 @app.get("/")
 def dashboard(
     request: Request, 
-    db: Session = Depends(get_db), 
-    user = Depends(get_current_user)   # Removed type hint to avoid exception
+    db: Session = Depends(get_db)
 ):
+    # Try to get current user safely
+    try:
+        user = get_current_user(request=request, db=db)
+    except:
+        user = None
+
     # Redirect to login if not authenticated
     if not user:
         return RedirectResponse(url="/login", status_code=303)
