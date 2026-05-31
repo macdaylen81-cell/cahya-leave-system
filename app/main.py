@@ -34,7 +34,6 @@ app.include_router(holidays.router)
 # ====================== GLOBAL FORCE PASSWORD CHANGE MIDDLEWARE ======================
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    # Skip public routes
     if request.url.path in [
         "/login", 
         "/change-password", 
@@ -52,7 +51,7 @@ async def force_password_change_middleware(request: Request, call_next):
             if user and getattr(user, 'must_change_password', False):
                 return RedirectResponse(url="/change-password", status_code=303)
         except:
-            pass  # If any error, continue normally
+            pass
 
     return await call_next(request)
 
@@ -64,9 +63,15 @@ def dashboard(
     db: Session = Depends(get_db), 
     user: models.User = Depends(get_current_user)
 ):
+    # Redirect to login if not authenticated
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    # Force password change if needed
     if user.must_change_password:
         return RedirectResponse(url="/change-password", status_code=303)
 
+    # Normal dashboard
     pending = None
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending = db.query(models.LeaveRequest).filter(
@@ -112,14 +117,12 @@ def init_admin(db: Session = Depends(get_db)):
     db.add(admin)
     db.commit()
 
-    # Seed Malaysia Public Holidays 2026
     seed_malaysia_holidays(db)
 
     return {"detail": "✅ Admin created + Malaysia Public Holidays seeded successfully!"}
 
 
 def seed_malaysia_holidays(db: Session):
-    """Seed 2026 Malaysia Public Holidays"""
     from datetime import date
 
     holidays_2026 = [
@@ -149,7 +152,6 @@ def seed_malaysia_holidays(db: Session):
     print("✅ Malaysia Public Holidays for 2026 seeded successfully!")
 
 
-# Run the app locally
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
