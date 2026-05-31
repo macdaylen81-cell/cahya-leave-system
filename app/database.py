@@ -1,17 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import os
 
-# Get DATABASE_URL from Railway Variables
-DATABASE_URL = os.getenv("DATABASE_URL")
+# === TEMPORARY HARDCODED URL ===
+DATABASE_URL = "postgresql://postgres:kPcQBTNSuFpUOGGADQekfWvNuohowHJN@postgres.railway.internal:5432/railway"
 
-if not DATABASE_URL:
-    raise Exception("❌ DATABASE_URL environment variable is not set!")
+print("✅ Using hardcoded DATABASE_URL")
 
-print("✅ Using DATABASE_URL:", DATABASE_URL)   # For debugging
-
-# Create engine
 engine = create_engine(
     DATABASE_URL,
     echo=False,
