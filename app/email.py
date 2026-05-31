@@ -15,7 +15,10 @@ def send_email(email_to: str, subject: str, html: str):
         msg['Subject'] = subject
         msg.attach(MIMEText(html, 'html'))
 
-        server = smtplib.SMTP(settings.SMTP_HOST or 'smtp-relay.brevo.com', 587)
+        # Use Brevo SMTP
+        smtp_host = getattr(settings, 'SMTP_HOST', 'smtp-relay.brevo.com')
+
+        server = smtplib.SMTP(smtp_host, 587)
         server.starttls()
         server.login(settings.SMTP_SENDER, settings.SMTP_PASSWORD)
         server.send_message(msg)
