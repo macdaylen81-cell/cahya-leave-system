@@ -7,9 +7,10 @@ import os
 
 from .database import Base, engine, get_db
 from . import models
-from .deps import get_current_user_dep   # ← Updated import
-from .routers import auth, totp, leaves, users, overtime, notifications, reports, holidays 
-from .security import get_password_hash
+from .deps import get_current_user_dep
+from .security import get_current_user, get_password_hash
+
+from .routers import auth, totp, leaves, users, overtime, notifications, reports, holidays
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,38 +29,51 @@ app.include_router(reports.router)
 app.include_router(holidays.router)
 
 
-# ====================== GLOBAL FORCE PASSWORD + 2FA MIDDLEWARE ======================
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    skip_paths = ["/login", "/change-password", "/totp/setup", "/totp/enable", "/init-admin", "/static", "/favicon.ico"]
-    if request.url.path in skip_paths:
+    allowed_paths = [
+        "/",
+        "/login",
+        "/change-password",
+        "/totp/setup",
+        "/totp/enable",
+        "/init-admin",
+        "/favicon.ico",
+    ]
+
+    if request.url.path in allowed_paths or request.url.path.startswith("/static"):
         return await call_next(request)
 
     if "session" in request.cookies:
         try:
             db = next(get_db())
-            user = get_current_user_dep(request=request, db=db)
-            
-            if user:
-                if getattr(user, 'must_change_password', False):
-                    return RedirectResponse(url="/change-password", status_code=303)
-                
-                if not getattr(user, 'is_totp_enabled', False):
-                    return RedirectResponse(url="/totp/setup", status_code=303)
-                    
-        except:
-            pass  # Let normal flow handle unauthenticated users
+            user = get_current_user(request=request, db=db)
+
+            if user and getattr(user, "must_change_password", False):
+                return RedirectResponse(url="/change-password", status_code=303)
+
+            if user and not user.is_totp_enabled:
+                return RedirectResponse(url="/totp/setup", status_code=303)
+
+        except Exception:
+            pass
 
     return await call_next(request)
 
 
-# ====================== DASHBOARD ======================
 @app.get("/")
-def dashboard(request: Request, db: Session = Depends(get_db), user: models.User = Depends(get_current_user_dep)):
-    if not user:
-        return RedirectResponse(url="/login", status_code=303)
+def root():
+    return RedirectResponse(url="/login", status_code=303)
 
+
+@app.get("/dashboard")
+def dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user_dep),
+):
     pending = None
+
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending = db.query(models.LeaveRequest).filter(
             models.LeaveRequest.status == models.LeaveStatusEnum.pending
@@ -89,10 +103,13 @@ def dashboard(request: Request, db: Session = Depends(get_db), user: models.User
 
 @app.get("/init-admin")
 def init_admin(db: Session = Depends(get_db)):
-    existing = db.query(models.User).filter(models.User.role == models.RoleEnum.admin).first()
+    existing = db.query(models.User).filter(
+        models.User.role == models.RoleEnum.admin
+    ).first()
+
     if existing:
         return {"detail": "Admin already exists"}
-    
+
     admin = models.User(
         username="admin",
         email="admin@gmail.com",
@@ -101,6 +118,7 @@ def init_admin(db: Session = Depends(get_db)):
         is_active=True,
         must_change_password=False,
     )
+
     db.add(admin)
     db.commit()
 
@@ -111,6 +129,7 @@ def init_admin(db: Session = Depends(get_db)):
 
 def seed_malaysia_holidays(db: Session):
     from datetime import date
+
     holidays_2026 = [
         ("2026-01-01", "New Year's Day"),
         ("2026-02-17", "Chinese New Year"),
@@ -131,8 +150,14 @@ def seed_malaysia_holidays(db: Session):
         existing = db.query(models.PublicHoliday).filter(
             models.PublicHoliday.date == date.fromisoformat(h_date)
         ).first()
+
         if not existing:
-            db.add(models.PublicHoliday(date=date.fromisoformat(h_date), name=name))
+            db.add(
+                models.PublicHoliday(
+                    date=date.fromisoformat(h_date),
+                    name=name,
+                )
+            )
 
     db.commit()
     print("✅ Malaysia Public Holidays for 2026 seeded successfully!")
@@ -140,4 +165,9 @@ def seed_malaysia_holidays(db: Session):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+    )
