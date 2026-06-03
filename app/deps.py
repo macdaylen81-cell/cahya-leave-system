@@ -1,25 +1,30 @@
 from fastapi import Depends, Request, HTTPException, status
 from sqlalchemy.orm import Session
 from .database import get_db
-from .security import get_current_user   # ← Updated import
+from .security import get_current_user   # JWT version
 from . import models
 
 
+# Database dependency
 def get_db_dep():
-    return next(get_db())
+    db = next(get_db())
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-# Main dependency to get current user from JWT token
-def get_current_user_dependency(
+# Current user dependency (JWT)
+def get_current_user_dep(
     request: Request, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db_dep)
 ):
     return get_current_user(request, db)
 
 
-# Role-based permission checker
+# Role checker
 def require_role(*roles: models.RoleEnum):
-    def role_checker(user: models.User = Depends(get_current_user_dependency)):
+    def role_checker(user: models.User = Depends(get_current_user_dep)):
         if user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, 

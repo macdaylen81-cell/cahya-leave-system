@@ -7,11 +7,8 @@ import os
 
 from .database import Base, engine, get_db
 from . import models
-from .deps import get_current_user
-
-# Import all routers
+from .deps import get_current_user_dep   # ← Updated import
 from .routers import auth, totp, leaves, users, overtime, notifications, reports, holidays 
-
 from .security import get_password_hash
 
 Base.metadata.create_all(bind=engine)
@@ -31,34 +28,34 @@ app.include_router(reports.router)
 app.include_router(holidays.router)
 
 
-# ====================== GLOBAL FORCE PASSWORD CHANGE MIDDLEWARE ======================
+# ====================== GLOBAL FORCE PASSWORD + 2FA MIDDLEWARE ======================
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    if request.url.path in ["/login", "/change-password", "/totp/setup", "/totp/enable", "/init-admin", "/static", "/favicon.ico"]:
+    skip_paths = ["/login", "/change-password", "/totp/setup", "/totp/enable", "/init-admin", "/static", "/favicon.ico"]
+    if request.url.path in skip_paths:
         return await call_next(request)
 
     if "session" in request.cookies:
         try:
             db = next(get_db())
-            user = get_current_user(request=request, db=db)
+            user = get_current_user_dep(request=request, db=db)
             
             if user:
                 if getattr(user, 'must_change_password', False):
                     return RedirectResponse(url="/change-password", status_code=303)
                 
-                # NEW: Force 2FA setup for new users
-                if not user.is_totp_enabled:
+                if not getattr(user, 'is_totp_enabled', False):
                     return RedirectResponse(url="/totp/setup", status_code=303)
                     
         except:
-            pass
+            pass  # Let normal flow handle unauthenticated users
 
     return await call_next(request)
 
 
-# ====================== DASHBOARD (FINAL FIXED) ======================
+# ====================== DASHBOARD ======================
 @app.get("/")
-def dashboard(request: Request, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+def dashboard(request: Request, db: Session = Depends(get_db), user: models.User = Depends(get_current_user_dep)):
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
@@ -114,7 +111,6 @@ def init_admin(db: Session = Depends(get_db)):
 
 def seed_malaysia_holidays(db: Session):
     from datetime import date
-
     holidays_2026 = [
         ("2026-01-01", "New Year's Day"),
         ("2026-02-17", "Chinese New Year"),
