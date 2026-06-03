@@ -2,38 +2,18 @@
 {% block content %}
 
 <div class="max-w-7xl mx-auto p-6">
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex justify-between items-center mb-8 print:hidden">
         <div>
             <h1 class="text-4xl font-bold">HR Leave Report</h1>
             <p class="text-base-content/70">Generated on {{ generated_at }}</p>
         </div>
         <div class="flex gap-3">
-            <a href="/reports/hr-leaves/export{% if start_date %}?start_date={{ start_date }}{% if end_date %}&end_date={{ end_date }}{% endif %}{% endif %}" 
-               class="btn btn-success">
-                📥 Export to Excel
-            </a>
-            <button onclick="window.print()" class="btn btn-primary">
+            <button onclick="window.print()" class="btn btn-primary flex items-center gap-2">
                 🖨️ Print / Save as PDF
             </button>
-            <a href="/reports/hr-leaves" class="btn btn-ghost">🔄 Refresh</a>
-        </div>
-    </div>
-
-    <!-- Date Filter -->
-    <div class="card bg-base-100 shadow-xl mb-8">
-        <div class="card-body">
-            <form method="get" class="flex gap-4 items-end flex-wrap">
-                <div>
-                    <label class="label"><span class="label-text">From Date</span></label>
-                    <input type="date" name="start_date" value="{{ start_date }}" class="input input-bordered">
-                </div>
-                <div>
-                    <label class="label"><span class="label-text">To Date</span></label>
-                    <input type="date" name="end_date" value="{{ end_date }}" class="input input-bordered">
-                </div>
-                <button type="submit" class="btn btn-primary">Filter</button>
-                <a href="/reports/hr-leaves" class="btn btn-ghost">Clear Filter</a>
-            </form>
+            <a href="/reports/hr-leaves/export" class="btn btn-outline flex items-center gap-2">
+                📥 Download Excel
+            </a>
         </div>
     </div>
 
@@ -57,75 +37,91 @@
         </div>
     </div>
 
-    <!-- Detailed Table -->
-    <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <div class="overflow-x-auto">
-                <table class="table table-zebra w-full">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Days</th>
-                            <th>Status</th>
-                            <th>Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for leave in leaves %}
-                        <tr>
-                            <td>{{ leave.user.username }}</td>
-                            <td><span class="badge">{{ leave.leave_type.value|title }}</span></td>
-                            <td>{{ leave.start_date }}</td>
-                            <td>{{ leave.end_date }}</td>
-                            <td class="font-bold">{{ (leave.end_date - leave.start_date).days + 1 }}</td>
-                            <td>
-                                {% if leave.status.value == 'approved' %}
-                                    <span class="badge badge-success">Approved</span>
-                                {% elif leave.status.value == 'rejected' %}
-                                    <span class="badge badge-error">Rejected</span>
-                                {% else %}
-                                    <span class="badge badge-warning">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td class="max-w-xs truncate">{{ leave.reason }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <!-- Leave Table -->
+    <div class="card bg-base-100 shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for leave in leaves %}
+                    <tr>
+                        <td>{{ leave.user.username }}</td>
+                        <td><span class="badge">{{ leave.leave_type.value|title }}</span></td>
+                        <td>{{ leave.start_date }}</td>
+                        <td>{{ leave.end_date }}</td>
+                        <td class="font-semibold">{{ (leave.end_date - leave.start_date).days + 1 }}</td>
+                        <td>
+                            {% if leave.status == 'approved' %}
+                                <span class="badge badge-success">Approved</span>
+                            {% elif leave.status == 'rejected' %}
+                                <span class="badge badge-error">Rejected</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="max-w-xs truncate">{{ leave.reason }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- Print Styles -->
+<!-- ==================== PRINT STYLES ==================== -->
 <style>
     @media print {
-        .navbar, .btn, .alert, form, .max-w-7xl > div:first-child {
+        .navbar, 
+        .btn, 
+        .alert, 
+        .flex.justify-between,
+        .print\:hidden {
             display: none !important;
         }
+        
         body {
             background: white !important;
             color: black !important;
+            font-size: 11pt;
+            margin: 0;
+            padding: 15px;
         }
+        
         .card {
             box-shadow: none !important;
-            border: 1px solid #ccc;
+            border: 1px solid #999;
         }
-        h1 {
-            text-align: center;
-            font-size: 28px;
+        
+        h1, h2, h3 {
+            color: black !important;
         }
+        
         table {
+            width: 100% !important;
             border-collapse: collapse;
-            width: 100%;
         }
+        
         th, td {
             border: 1px solid #666;
-            padding: 8px;
+            padding: 6px 8px;
             text-align: left;
+            font-size: 10pt;
+        }
+        
+        .badge {
+            border: 1px solid #000;
+            padding: 2px 6px;
+            font-size: 9pt;
         }
     }
 </style>
