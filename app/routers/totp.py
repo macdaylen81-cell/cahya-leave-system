@@ -6,24 +6,17 @@ import pyotp
 
 from ..database import get_db
 from .. import models
-from ..deps import get_current_user
+from ..deps import get_current_user_dep
 
 router = APIRouter(prefix="/totp", tags=["totp"])
 templates = Jinja2Templates(directory="app/templates")
-
-
-def get_logged_in_user(
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    return get_current_user(request=request, db=db)
 
 
 @router.get("/setup")
 def totp_setup_page(
     request: Request,
     db: Session = Depends(get_db),
-    user: models.User = Depends(get_logged_in_user),
+    user: models.User = Depends(get_current_user_dep),
 ):
     if user.is_totp_enabled:
         return RedirectResponse(url="/dashboard", status_code=303)
@@ -55,7 +48,7 @@ def enable_totp(
     request: Request,
     code: str = Form(...),
     db: Session = Depends(get_db),
-    user: models.User = Depends(get_logged_in_user),
+    user: models.User = Depends(get_current_user_dep),
 ):
     if user.is_totp_enabled:
         return RedirectResponse(url="/dashboard", status_code=303)
