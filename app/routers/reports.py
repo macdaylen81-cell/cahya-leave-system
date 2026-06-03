@@ -58,7 +58,7 @@ def export_hr_report(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
 ):
-    query = db.query(models.LeaveRequest)
+    query = db.query(models.LeaveRequest).order_by(models.LeaveRequest.start_date.desc())
 
     if start_date:
         query = query.filter(models.LeaveRequest.start_date >= start_date)
@@ -72,12 +72,13 @@ def export_hr_report(
         data.append({
             "Employee": l.user.username if l.user else "Unknown",
             "Email": l.user.email if l.user else "",
-            "Leave Type": l.leave_type.value.title() if hasattr(l, 'leave_type') and l.leave_type else "N/A",
-            "Start Date": l.start_date,
-            "End Date": l.end_date,
+            "Leave Type": l.leave_type.value.title() if hasattr(l.leave_type, 'value') else str(l.leave_type),
+            "Start Date": l.start_date.strftime("%d/%m/%Y") if l.start_date else "",
+            "End Date": l.end_date.strftime("%d/%m/%Y") if l.end_date else "",
             "Days": (l.end_date - l.start_date).days + 1 if l.end_date and l.start_date else 0,
-            "Status": l.status.value.title() if hasattr(l, 'status') and l.status else "N/A",
+            "Status": l.status.value.title() if hasattr(l.status, 'value') else str(l.status),
             "Reason": l.reason or "",
+            "Applied On": l.created_at.strftime("%d/%m/%Y %H:%M") if hasattr(l, 'created_at') and l.created_at else ""
         })
 
     df = pd.DataFrame(data)
@@ -85,6 +86,19 @@ def export_hr_report(
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name="Leave_Report")
+        
+        # === STRONGER FIX FOR ####### ===
+        worksheet = writer.sheets['Leave_Report']
+        
+        # Force specific widths for date columns
+        worksheet.column_dimensions['A'].width = 25   # Employee
+        worksheet.column_dimensions['B'].width = 18   # Leave Type
+        worksheet.column_dimensions['C'].width = 18   # Start Date
+        worksheet.column_dimensions['D'].width = 18   # End Date
+        worksheet.column_dimensions['E'].width = 10   # Days
+        worksheet.column_dimensions['F'].width = 15   # Status
+        worksheet.column_dimensions['G'].width = 50   # Reason
+        worksheet.column_dimensions['H'].width = 22   # Applied On
 
     output.seek(0)
 
