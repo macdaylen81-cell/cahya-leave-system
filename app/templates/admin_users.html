@@ -23,8 +23,8 @@
                         <th>Username</th>
                         <th>Email</th>
                         <th>Role</th>
-                        <th>2FA</th>
-                        <th>Status</th>
+                        <th>2FA Status</th>
+                        <th>Account Status</th>
                         <th>Quota</th>
                         <th>Used</th>
                         <th>Remaining</th>
@@ -46,7 +46,18 @@
                             {{ u.role.value | title }}
                         </span>
                     </td>
-                    <td>{{ "✅ ON" if u.is_totp_enabled else "OFF" }}</td>
+                    <!-- Improved 2FA Column -->
+                    <td>
+                        {% if u.is_totp_enabled %}
+                            <span class="badge badge-success gap-1">
+                                <span class="text-xs">✅</span> ENABLED
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning gap-1">
+                                <span class="text-xs">⚠️</span> NOT SET
+                            </span>
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge {% if u.is_active %}badge-success{% else %}badge-error{% endif %}">
                             {{ "Active" if u.is_active else "Inactive" }}

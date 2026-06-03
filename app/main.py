@@ -34,15 +34,22 @@ app.include_router(holidays.router)
 # ====================== GLOBAL FORCE PASSWORD CHANGE MIDDLEWARE ======================
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    if request.url.path in ["/login", "/change-password", "/init-admin", "/static", "/favicon.ico"]:
+    if request.url.path in ["/login", "/change-password", "/totp/setup", "/totp/enable", "/init-admin", "/static", "/favicon.ico"]:
         return await call_next(request)
 
     if "session" in request.cookies:
         try:
             db = next(get_db())
             user = get_current_user(request=request, db=db)
-            if user and getattr(user, 'must_change_password', False):
-                return RedirectResponse(url="/change-password", status_code=303)
+            
+            if user:
+                if getattr(user, 'must_change_password', False):
+                    return RedirectResponse(url="/change-password", status_code=303)
+                
+                # NEW: Force 2FA setup for new users
+                if not user.is_totp_enabled:
+                    return RedirectResponse(url="/totp/setup", status_code=303)
+                    
         except:
             pass
 
