@@ -42,3 +42,4 @@ urllib3==2.6.2
 uvicorn==0.40.0
 sib-api-v3-sdk
 python-jose[cryptography]
+openpyxl
