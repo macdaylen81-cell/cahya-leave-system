@@ -40,13 +40,11 @@
                 <li><a href="/users/" class="font-medium">👥 Manage Users</a></li>
                 {% endif %}
 
-                <!-- HR Reports -->
                 {% if user and (user.role in ['hr', 'admin']) %}
                 <li><a href="/holidays/" class="font-medium">🎉 Holidays</a></li>
                 <li><a href="/reports/hr-leaves" class="font-medium">📊 HR Reports</a></li>
                 {% endif %}
 
-                <!-- 2FA Setup Link -->
                 {% if user and not user.is_totp_enabled %}
                 <li><a href="/totp/setup" class="font-medium text-orange-500">🔐 Setup 2FA</a></li>
                 {% endif %}
@@ -58,6 +56,12 @@
             <div class="flex items-center gap-3">
                 <span class="text-sm">{{ user.username }}</span>
                 <span class="badge badge-primary">{{ user.role.value }}</span>
+                
+                <!-- Session Countdown -->
+                <span id="session-timer" class="text-xs font-mono bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                    30s
+                </span>
+                
                 <a href="/logout" class="btn btn-error btn-sm">Logout</a>
             </div>
             {% endif %}
@@ -68,6 +72,34 @@
     <div class="max-w-7xl mx-auto p-8">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Session Countdown Script -->
+    <script>
+        let timeLeft = 30; // 30 seconds for demo
+
+        function updateTimer() {
+            const timerEl = document.getElementById('session-timer');
+            if (timerEl) {
+                timerEl.textContent = timeLeft + "s";
+                
+                if (timeLeft <= 10) {
+                    timerEl.classList.add('bg-red-100', 'text-red-700');
+                }
+                
+                if (timeLeft <= 0) {
+                    window.location.href = '/logout';
+                } else {
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
+                }
+            }
+        }
+
+        // Start countdown when page loads
+        window.onload = function() {
+            updateTimer();
+        };
+    </script>
 
 </body>
 </html>
