@@ -10,7 +10,7 @@ from . import models
 from .deps import get_current_user_dep
 from .security import get_current_user, get_password_hash
 
-from .routers import auth, totp, leaves, users, overtime, notifications, reports, holidays
+from .routers import auth, totp, leaves, users, overtime, reports, holidays
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,7 +24,6 @@ app.include_router(totp.router)
 app.include_router(leaves.router)
 app.include_router(users.router)
 app.include_router(overtime.router)
-app.include_router(notifications.router)
 app.include_router(reports.router)
 app.include_router(holidays.router)
 
