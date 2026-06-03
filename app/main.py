@@ -30,35 +30,43 @@ app.include_router(holidays.router)
 
 @app.middleware("http")
 async def force_password_change_middleware(request: Request, call_next):
-    allowed_paths = [
-        "/",
-        "/login",
-        "/change-password",
-        "/totp/setup",
-        "/totp/enable",
-        "/init-admin",
-        "/favicon.ico",
+    # Skip these paths completely
+    skip_paths = [
+        "/login", 
+        "/change-password", 
+        "/totp/setup", 
+        "/totp/enable", 
+        "/init-admin", 
+        "/static", 
+        "/favicon.ico"
     ]
-
-    if request.url.path in allowed_paths or request.url.path.startswith("/static"):
+    
+    if request.url.path in skip_paths:
         return await call_next(request)
 
+    # Only check if user is logged in
     if "session" in request.cookies:
         try:
             db = next(get_db())
-            user = get_current_user(request=request, db=db)
-
-            if user and getattr(user, "must_change_password", False):
-                return RedirectResponse(url="/change-password", status_code=303)
-
-            if user and not user.is_totp_enabled:
-                return RedirectResponse(url="/totp/setup", status_code=303)
-
-        except Exception:
-            pass
+            user = get_current_user(request, db)
+            
+            if user:
+                # Force password change first (highest priority)
+                if getattr(user, 'must_change_password', False):
+                    return RedirectResponse(url="/change-password", status_code=303)
+                
+                # Force 2FA setup (only if password is already changed)
+                if not getattr(user, 'is_totp_enabled', False):
+                    # Allow access to dashboard even if 2FA not set up
+                    if request.url.path == "/":
+                        pass  
+                    else:
+                        return RedirectResponse(url="/totp/setup", status_code=303)
+                    
+        except:
+            pass  
 
     return await call_next(request)
-
 
 @app.get("/")
 def root():
