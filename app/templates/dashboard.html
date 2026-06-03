@@ -1,66 +1,68 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="max-w-7xl mx-auto p-6">
-    <h1 class="text-4xl font-bold mb-8">Welcome back, {{ user.username }}! 👋</h1>
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-4xl font-bold">Welcome back, {{ user.username }}! 👋</h1>
+    </div>
 
-    <!-- Leave Balance Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-
-        <!-- Annual Leave -->
-        <div class="card bg-base-100 shadow-xl p-6">
-            <h2 class="text-lg font-semibold text-base-content/70">Annual Leave</h2>
-            <div class="text-5xl font-bold text-primary mt-2">
-                {{ user.annual_leave_quota - (user.used_annual_leave or 0) }}
+    <!-- 2FA Setup Alert -->
+    {% if user and not user.is_totp_enabled %}
+    <div class="alert alert-warning shadow-lg mb-8">
+        <div class="flex items-center gap-3">
+            <span class="text-3xl">🔐</span>
+            <div>
+                <h3 class="font-semibold">Enhance your account security!</h3>
+                <p class="text-sm">Please setup Two-Factor Authentication (2FA) using Google Authenticator.</p>
             </div>
-            <p class="text-sm text-base-content/60">days remaining / {{ user.annual_leave_quota }}</p>
+        </div>
+        <a href="/totp/setup" class="btn btn-primary btn-sm whitespace-nowrap">Setup 2FA Now</a>
+    </div>
+    {% endif %}
+
+    <!-- Dashboard Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Annual Leave -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h3 class="text-lg font-medium">Annual Leave</h3>
+                <div class="text-5xl font-bold text-primary mt-2">
+                    {{ user.annual_leave_quota - (user.used_annual_leave or 0) }}
+                </div>
+                <p class="text-sm text-gray-500">days remaining / {{ user.annual_leave_quota }}</p>
+            </div>
         </div>
 
         <!-- Carry Forward -->
-        <div class="card bg-base-100 shadow-xl p-6 border-2 border-amber-400">
-            <h2 class="text-lg font-semibold flex items-center gap-2">
-                📅 Carry Forward
-            </h2>
-            <div class="text-5xl font-bold text-amber-600 mt-2">
-                {{ user.carry_forward_days or 0 }}
+        <div class="card bg-base-100 shadow-xl border-2 border-yellow-400">
+            <div class="card-body">
+                <h3 class="text-lg font-medium">Carry Forward</h3>
+                <div class="text-5xl font-bold text-yellow-600 mt-2">
+                    {{ user.carry_forward_days or 0 }}
+                </div>
+                <p class="text-sm text-gray-500">From previous year</p>
             </div>
-            <p class="text-sm text-base-content/60">
-                {% if user.carry_forward_expiry %}Expires {{ user.carry_forward_expiry }}{% else %}From previous year{% endif %}
-            </p>
         </div>
 
         <!-- First Half -->
-        <div class="card bg-base-100 shadow-xl p-6">
-            <h2 class="text-lg font-semibold text-base-content/70">First Half (Jan-Jun)</h2>
-            <div class="text-5xl font-bold text-blue-600 mt-2">
-                {{ 10 - (user.first_half_used or 0) }}
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h3 class="text-lg font-medium">First Half (Jan-Jun)</h3>
+                <div class="text-5xl font-bold text-blue-600 mt-2">
+                    {{ 10 - (user.first_half_used or 0) }}
+                </div>
+                <p class="text-sm text-gray-500">days left</p>
             </div>
-            <p class="text-sm text-base-content/60">days left</p>
         </div>
 
         <!-- Second Half -->
-        <div class="card bg-base-100 shadow-xl p-6">
-            <h2 class="text-lg font-semibold text-base-content/70">Second Half (Jul-Dec)</h2>
-            <div class="text-5xl font-bold text-purple-600 mt-2">
-                {{ 10 - (user.second_half_used or 0) }}
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h3 class="text-lg font-medium">Second Half (Jul-Dec)</h3>
+                <div class="text-5xl font-bold text-blue-600 mt-2">
+                    {{ 10 - (user.second_half_used or 0) }}
+                </div>
+                <p class="text-sm text-gray-500">days left</p>
             </div>
-            <p class="text-sm text-base-content/60">days left</p>
         </div>
-
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="card bg-base-100 shadow-xl p-6">
-            <h3 class="font-semibold mb-4">My Pending Requests</h3>
-            <div class="text-4xl font-bold">{{ my_pending or 0 }}</div>
-        </div>
-        <div class="card bg-base-100 shadow-xl p-6">
-            <h3 class="font-semibold mb-4">My Approved Leaves</h3>
-            <div class="text-4xl font-bold text-success">{{ my_approved or 0 }}</div>
-        </div>
-    </div>
-
-</div>
-
-{% endblock %}

@@ -45,6 +45,11 @@
                 <li><a href="/holidays/" class="font-medium">🎉 Holidays</a></li>
                 <li><a href="/reports/hr-leaves" class="font-medium">📊 HR Reports</a></li>
                 {% endif %}
+
+                <!-- 2FA Setup Link -->
+                {% if user and not user.is_totp_enabled %}
+                <li><a href="/totp/setup" class="font-medium text-orange-500">🔐 Setup 2FA</a></li>
+                {% endif %}
             </ul>
         </div>
 
