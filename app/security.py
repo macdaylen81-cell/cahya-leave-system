@@ -6,8 +6,8 @@ from passlib.context import CryptContext
 from .config import settings
 from . import models
 
-# JWT Configuration
-SECRET_KEY = settings.SECRET_KEY if hasattr(settings, "SECRET_KEY") else "cahya-mata-leave-system-secret-key-2026-change-in-production"
+# JWT Settings
+SECRET_KEY = getattr(settings, "SECRET_KEY", "cahya-mata-leave-system-secret-2026")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30   # Change to 0.5 for 30 seconds demo
 
