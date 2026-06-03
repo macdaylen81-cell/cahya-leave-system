@@ -12,17 +12,22 @@ router = APIRouter(prefix="/totp", tags=["totp"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+def get_logged_in_user(
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    return get_current_user(request=request, db=db)
+
+
 @router.get("/setup")
 def totp_setup_page(
-    request: Request, 
-    db: Session = Depends(get_db), 
-    user: models.User = Depends(get_current_user)
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_logged_in_user),
 ):
-    # If already enabled, redirect to dashboard
     if user.is_totp_enabled:
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/dashboard", status_code=303)
 
-    # Generate secret only if user doesn't have one
     if not user.totp_secret:
         user.totp_secret = pyotp.random_base32()
         db.commit()
@@ -30,16 +35,19 @@ def totp_setup_page(
 
     totp = pyotp.TOTP(user.totp_secret)
     provisioning_uri = totp.provisioning_uri(
-        name=user.email, 
+        name=user.email,
         issuer_name="Cahya Mata Intelligence"
     )
 
-    return templates.TemplateResponse("totp_setup.html", {
-        "request": request,
-        "user": user,
-        "secret": user.totp_secret,
-        "provisioning_uri": provisioning_uri,
-    })
+    return templates.TemplateResponse(
+        "totp_setup.html",
+        {
+            "request": request,
+            "user": user,
+            "secret": user.totp_secret,
+            "provisioning_uri": provisioning_uri,
+        },
+    )
 
 
 @router.post("/enable")
@@ -47,29 +55,37 @@ def enable_totp(
     request: Request,
     code: str = Form(...),
     db: Session = Depends(get_db),
-    user: models.User = Depends(get_current_user),
+    user: models.User = Depends(get_logged_in_user),
 ):
     if user.is_totp_enabled:
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    if not user.totp_secret:
+        user.totp_secret = pyotp.random_base32()
+        db.commit()
+        db.refresh(user)
 
     totp = pyotp.TOTP(user.totp_secret)
-    
+
     if not totp.verify(code, valid_window=1):
-        # Regenerate URI for template
         provisioning_uri = totp.provisioning_uri(
-            name=user.email, 
+            name=user.email,
             issuer_name="Cahya Mata Intelligence"
         )
-        return templates.TemplateResponse("totp_setup.html", {
-            "request": request,
-            "user": user,
-            "secret": user.totp_secret,
-            "provisioning_uri": provisioning_uri,
-            "error": "Invalid verification code. Please try again."
-        })
 
-    # Enable TOTP
+        return templates.TemplateResponse(
+            "totp_setup.html",
+            {
+                "request": request,
+                "user": user,
+                "secret": user.totp_secret,
+                "provisioning_uri": provisioning_uri,
+                "error": "Invalid verification code. Please try again.",
+            },
+            status_code=400,
+        )
+
     user.is_totp_enabled = True
     db.commit()
 
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/dashboard", status_code=303)
