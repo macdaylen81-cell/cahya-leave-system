@@ -73,9 +73,9 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Session Countdown Script -->
+    <!-- Session Countdown + Back Button Prevention -->
     <script>
-        let timeLeft = 30; // 30 seconds for demo
+        let timeLeft = 30;
 
         function updateTimer() {
             const timerEl = document.getElementById('session-timer');
@@ -83,6 +83,7 @@
                 timerEl.textContent = timeLeft + "s";
                 
                 if (timeLeft <= 10) {
+                    timerEl.classList.remove('bg-orange-100', 'text-orange-700');
                     timerEl.classList.add('bg-red-100', 'text-red-700');
                 }
                 
@@ -95,10 +96,24 @@
             }
         }
 
-        // Start countdown when page loads
+        // Start countdown
         window.onload = function() {
             updateTimer();
         };
+
+        // Prevent back button after logout
+        function preventBack() {
+            window.history.forward();
+        }
+        setTimeout(preventBack, 0);
+        window.onunload = function() { null; };
+
+        // Force reload if user presses back button
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
     </script>
 
 </body>
