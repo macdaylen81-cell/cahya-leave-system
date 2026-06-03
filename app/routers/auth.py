@@ -25,11 +25,8 @@ def login_page(request: Request):
 
 async def verify_recaptcha(response_token: str) -> bool:
     if not settings.RECAPTCHA_SECRET_KEY:
-        return True  # DEV mode
-    data = {
-        "secret": settings.RECAPTCHA_SECRET_KEY,
-        "response": response_token,
-    }
+        return True
+    data = {"secret": settings.RECAPTCHA_SECRET_KEY, "response": response_token}
     async with httpx.AsyncClient() as client:
         r = await client.post("https://www.google.com/recaptcha/api/siteverify", data=data)
         j = r.json()
@@ -48,11 +45,12 @@ async def login(
     if not await verify_recaptcha(g_recaptcha_response):
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error": "reCAPTCHA verification failed", "recaptcha_site_key": settings.RECAPTCHA_SITE_KEY},
+            {"request": request, "error": "reCAPTCHA failed", "recaptcha_site_key": settings.RECAPTCHA_SITE_KEY},
             status_code=400
         )
 
     user = db.query(models.User).filter(models.User.username == username).first()
+
     if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse(
             "login.html",
@@ -60,13 +58,7 @@ async def login(
             status_code=400
         )
 
-    if user.is_totp_enabled:
-        if not totp_code:
-            return templates.TemplateResponse(
-                "login.html",
-                {"request": request, "error": "TOTP code required", "recaptcha_site_key": settings.RECAPTCHA_SITE_KEY},
-                status_code=400
-            )
+    if user.is_totp_enabled and totp_code:
         totp = pyotp.TOTP(user.totp_secret)
         if not totp.verify(totp_code, valid_window=1):
             return templates.TemplateResponse(
@@ -75,16 +67,16 @@ async def login(
                 status_code=400
             )
 
-    # Create session with 30 seconds timeout (for presentation)
+    # Create JWT Token
     token = create_session_token(user.id)
-    response = RedirectResponse(url="/", status_code=302)
 
+    response = RedirectResponse(url="/", status_code=302)
     response.set_cookie(
         "session", 
         token, 
         httponly=True, 
         samesite="lax",
-        max_age=30          # ← 30 seconds session timeout
+        max_age=30   # 30 seconds for demo
     )
 
     return response
@@ -112,15 +104,12 @@ def change_password(
 ):
     if new_password != confirm_password:
         return templates.TemplateResponse("change_password.html", {
-            "request": request, 
-            "user": user, 
-            "error": "Passwords do not match"
+            "request": request, "user": user, "error": "Passwords do not match"
         })
 
     user.password_hash = get_password_hash(new_password)
     user.must_change_password = False
     db.commit()
-
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -140,4 +129,4 @@ def init_admin(db: Session = Depends(get_db)):
     )
     db.add(admin)
     db.commit()
-    return {"detail": "✅ Admin created successfully! Username: admin | Password: admin123"}
+    return {"detail": "✅ Admin created!"}
