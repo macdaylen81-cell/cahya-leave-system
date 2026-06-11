@@ -127,7 +127,7 @@ async def login(
         token,
         httponly=True,
         samesite="lax",
-        max_age=1800,  # 30 minutes
+        max_age=180,  
     )
 
     return response

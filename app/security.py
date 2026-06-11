@@ -9,7 +9,7 @@ from . import models
 # JWT Configuration
 SECRET_KEY = getattr(settings, "SECRET_KEY", "cahya-mata-leave-system-secret-key-2026")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Change to 0.5 for 30 seconds demo
+ACCESS_TOKEN_EXPIRE_MINUTES = 3  
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
