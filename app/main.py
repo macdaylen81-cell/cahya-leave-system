@@ -8,6 +8,7 @@ from .database import Base, engine, get_db
 from . import models
 from .deps import get_current_user
 from .routers import auth, totp, leaves, users, overtime
+from .security import get_password_hash
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -17,6 +18,7 @@ app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+# Include routers (without notifications)
 app.include_router(auth.router)
 app.include_router(totp.router)
 app.include_router(leaves.router)
@@ -25,7 +27,7 @@ app.include_router(overtime.router)
 
 
 # ====================== ROOT ROUTE (FIXED) ======================
-@app.get("/")
+@app.get("/", response_model=None)
 def dashboard(
     request: Request, 
     db: Session = Depends(get_db), 
@@ -35,7 +37,7 @@ def dashboard(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
-    # Dashboard data for logged-in user
+    # Dashboard data for logged-in users
     pending = None
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending = db.query(models.LeaveRequest).filter(
@@ -74,11 +76,11 @@ def init_admin(db: Session = Depends(get_db)):
     admin = models.User(
         username="admin",
         email="admin@gmail.com",
-        password_hash=get_password_hash("admin123"),  # Make sure this import exists
+        password_hash=get_password_hash("admin123"),
         role=models.RoleEnum.admin,
         is_active=True,
         must_change_password=False,
     )
     db.add(admin)
     db.commit()
-    return {"detail": "✅ Admin created! Username: admin | Password: admin123"}
+    return {"detail": "✅ Admin created successfully! Username: admin | Password: admin123"}
