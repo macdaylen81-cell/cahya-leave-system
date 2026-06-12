@@ -13,6 +13,7 @@ router = APIRouter(prefix="/leave", tags=["leave"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+# ==================== EMPLOYEE ROUTES ====================
 @router.get("/")
 def list_my_leaves(
     request: Request,
@@ -26,21 +27,18 @@ def list_my_leaves(
         .all()
     )
 
+    # Calculate working days for display
     for leave in leaves:
         current = leave.start_date
         working_days = 0
-
         while current <= leave.end_date:
-            if current.weekday() < 5:
+            if current.weekday() < 5:  # Monday to Friday
                 holiday = db.query(models.PublicHoliday).filter(
                     models.PublicHoliday.date == current
                 ).first()
-
                 if not holiday:
                     working_days += 1
-
             current += timedelta(days=1)
-
         leave.display_days = working_days
 
     return templates.TemplateResponse(
@@ -76,23 +74,16 @@ def request_leave(
     e = date.fromisoformat(end_date)
 
     if days <= 0:
-        return RedirectResponse(
-            url="/leave/request?error=Invalid+date+range",
-            status_code=303,
-        )
+        return RedirectResponse(url="/leave/request?error=Invalid+date+range", status_code=303)
 
+    # Annual Leave Balance Check
     if leave_type == "annual":
         current_year = datetime.today().year
 
         if user.leave_year != current_year:
-            if not (
-                user.carry_forward_days
-                and user.carry_forward_expiry
-                and user.carry_forward_expiry >= date.today()
-            ):
+            if not (user.carry_forward_days and user.carry_forward_expiry and user.carry_forward_expiry >= date.today()):
                 user.carry_forward_days = 0
                 user.carry_forward_expiry = None
-
             user.leave_year = current_year
             user.first_half_used = 0
             user.second_half_used = 0
@@ -100,7 +91,6 @@ def request_leave(
 
         if s.month <= 6:
             remaining = 10 - (user.first_half_used or 0) + (user.carry_forward_days or 0)
-
             if days > remaining:
                 return RedirectResponse(
                     url=f"/leave/request?error=First+half+limit+reached.+Only+{remaining}+days+left",
@@ -108,7 +98,6 @@ def request_leave(
                 )
         else:
             remaining = 10 - (user.second_half_used or 0)
-
             if days > remaining:
                 return RedirectResponse(
                     url=f"/leave/request?error=Second+half+limit+reached.+Only+{remaining}+days+left",
@@ -128,6 +117,7 @@ def request_leave(
     db.commit()
     db.refresh(leave)
 
+    # Notify Managers
     managers = db.query(models.User).filter(
         models.User.role.in_([models.RoleEnum.manager, models.RoleEnum.admin]),
         models.User.email.isnot(None),
@@ -140,19 +130,13 @@ def request_leave(
         <p><strong>Type:</strong> {leave_type.title()}</p>
         <p><strong>Dates:</strong> {s} to {e} ({days} working days)</p>
         <p><strong>Reason:</strong> {reason}</p>
-        <p>Please review in the system.</p>
         """
-
-        send_email_background(
-            background_tasks,
-            manager.email,
-            "New Leave Request - Action Required",
-            html,
-        )
+        send_email_background(background_tasks, manager.email, "New Leave Request - Action Required", html)
 
     return RedirectResponse(url="/leave/", status_code=303)
 
 
+# ==================== MANAGER / HR ROUTES ====================
 @router.get("/manage")
 def manage_leaves(
     request: Request,
@@ -180,7 +164,6 @@ def employee_leave_history(
     user: models.User = Depends(require_role(models.RoleEnum.manager, models.RoleEnum.admin)),
 ):
     employee = db.query(models.User).filter(models.User.id == employee_id).first()
-
     if not employee:
         return RedirectResponse(url="/leave/manage", status_code=303)
 
@@ -197,7 +180,7 @@ def employee_leave_history(
             "request": request,
             "user": user,
             "employee": employee,
-            "leaves": leaves,
+            "leaves": leaves,           
         },
     )
 
@@ -210,13 +193,11 @@ def approve_leave(
     user: models.User = Depends(require_role(models.RoleEnum.manager, models.RoleEnum.admin)),
 ):
     leave = db.query(models.LeaveRequest).get(leave_id)
-
     if leave:
         leave.status = models.LeaveStatusEnum.approved
 
         if leave.leave_type == "annual":
             days = (leave.end_date - leave.start_date).days + 1
-
             if leave.start_date.month <= 6:
                 leave.user.first_half_used = (leave.user.first_half_used or 0) + days
             else:
@@ -244,7 +225,6 @@ def reject_leave(
     user: models.User = Depends(require_role(models.RoleEnum.manager, models.RoleEnum.admin)),
 ):
     leave = db.query(models.LeaveRequest).get(leave_id)
-
     if leave:
         leave.status = models.LeaveStatusEnum.rejected
         db.commit()
