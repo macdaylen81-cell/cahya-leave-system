@@ -10,7 +10,6 @@ from .deps import get_current_user_dep
 from .routers import auth, totp, leaves, users, overtime
 from .security import get_password_hash
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
@@ -18,7 +17,7 @@ app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Include routers
+# Routers
 app.include_router(auth.router)
 app.include_router(totp.router)
 app.include_router(leaves.router)
@@ -26,21 +25,18 @@ app.include_router(users.router)
 app.include_router(overtime.router)
 
 
-# ====================== DASHBOARD ======================
 @app.get("/")
 def dashboard(
     request: Request,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user_dep),
 ):
-    # Accurate balance calculation
     total_used = user.used_annual_leave or 0
     annual_remaining = user.annual_leave_quota - total_used
 
     first_half_remaining = 10 - (user.first_half_used or 0) + (user.carry_forward_days or 0)
     second_half_remaining = 10 - (user.second_half_used or 0)
 
-    # Count my requests
     my_pending = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.user_id == user.id,
         models.LeaveRequest.status == models.LeaveStatusEnum.pending
@@ -51,7 +47,6 @@ def dashboard(
         models.LeaveRequest.status == models.LeaveStatusEnum.approved
     ).count()
 
-    # Pending for approval (for manager/admin)
     pending_for_approval = None
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending_for_approval = db.query(models.LeaveRequest).filter(
@@ -74,7 +69,6 @@ def dashboard(
     )
 
 
-# ====================== INIT ADMIN ======================
 @app.get("/init-admin")
 def init_admin(db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.role == models.RoleEnum.admin).first()
@@ -92,6 +86,9 @@ def init_admin(db: Session = Depends(get_db)):
     )
     db.add(admin)
     db.commit()
-    return {"detail": "✅ Admin created successfully! Username: admin | Password: admin123"}
+    return {"detail": "✅ Admin created! Username: admin | Password: admin123"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
