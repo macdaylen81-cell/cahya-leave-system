@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
 from . import models
 from .deps import get_current_user
-from .routers import auth, totp, leaves, users, overtime, notifications
+from .routers import auth, totp, leaves, users, overtime
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
