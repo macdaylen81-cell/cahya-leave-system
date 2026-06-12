@@ -6,29 +6,25 @@ from datetime import date, datetime, timedelta
 
 from ..database import get_db
 from .. import models
-from ..deps import get_current_user, require_role
+from ..deps import get_current_user_dep, require_role
 from ..email import send_email_background
 
 router = APIRouter(prefix="/leave", tags=["leave"])
 templates = Jinja2Templates(directory="app/templates")
 
 
-def get_logged_in_user(
-    request: Request,
-    db: Session = Depends(get_db)
-):
-    return get_current_user(request=request, db=db)
-
-
 @router.get("/")
 def list_my_leaves(
     request: Request,
     db: Session = Depends(get_db),
-    user: models.User = Depends(get_logged_in_user),
+    user: models.User = Depends(get_current_user_dep),
 ):
-    leaves = db.query(models.LeaveRequest).filter(
-        models.LeaveRequest.user_id == user.id
-    ).all()
+    leaves = (
+        db.query(models.LeaveRequest)
+        .filter(models.LeaveRequest.user_id == user.id)
+        .order_by(models.LeaveRequest.start_date.desc())
+        .all()
+    )
 
     for leave in leaves:
         current = leave.start_date
@@ -49,25 +45,18 @@ def list_my_leaves(
 
     return templates.TemplateResponse(
         "leave_list.html",
-        {
-            "request": request,
-            "leaves": leaves,
-            "user": user,
-        },
+        {"request": request, "leaves": leaves, "user": user},
     )
 
 
 @router.get("/request")
 def request_leave_page(
     request: Request,
-    user: models.User = Depends(get_logged_in_user),
+    user: models.User = Depends(get_current_user_dep),
 ):
     return templates.TemplateResponse(
         "leave_request.html",
-        {
-            "request": request,
-            "user": user,
-        },
+        {"request": request, "user": user},
     )
 
 
@@ -81,7 +70,7 @@ def request_leave(
     leave_type: str = Form("annual"),
     days: int = Form(...),
     db: Session = Depends(get_db),
-    user: models.User = Depends(get_logged_in_user),
+    user: models.User = Depends(get_current_user_dep),
 ):
     s = date.fromisoformat(start_date)
     e = date.fromisoformat(end_date)
@@ -109,9 +98,7 @@ def request_leave(
             user.second_half_used = 0
             db.commit()
 
-        is_first_half = s.month <= 6
-
-        if is_first_half:
+        if s.month <= 6:
             remaining = 10 - (user.first_half_used or 0) + (user.carry_forward_days or 0)
 
             if days > remaining:
@@ -141,18 +128,14 @@ def request_leave(
     db.commit()
     db.refresh(leave)
 
-    print(f"✅ Leave request {leave.id} created by {user.username}")
-
     managers = db.query(models.User).filter(
         models.User.role.in_([models.RoleEnum.manager, models.RoleEnum.admin]),
         models.User.email.isnot(None),
     ).all()
 
-    print(f"📧 Found {len(managers)} managers to notify")
-
     for manager in managers:
         html = f"""
-        <h2>🔔 New Leave Request</h2>
+        <h2>New Leave Request</h2>
         <p><strong>Employee:</strong> {user.username}</p>
         <p><strong>Type:</strong> {leave_type.title()}</p>
         <p><strong>Dates:</strong> {s} to {e} ({days} working days)</p>
@@ -160,16 +143,12 @@ def request_leave(
         <p>Please review in the system.</p>
         """
 
-        print(f"→ Sending email to {manager.email}")
-
         send_email_background(
             background_tasks,
             manager.email,
             "New Leave Request - Action Required",
             html,
         )
-
-    print("✅ Notification process completed")
 
     return RedirectResponse(url="/leave/", status_code=303)
 
@@ -189,10 +168,36 @@ def manage_leaves(
 
     return templates.TemplateResponse(
         "leave_manage.html",
+        {"request": request, "pending": pending, "user": user},
+    )
+
+
+@router.get("/employee/{employee_id}/history")
+def employee_leave_history(
+    employee_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(require_role(models.RoleEnum.manager, models.RoleEnum.admin)),
+):
+    employee = db.query(models.User).filter(models.User.id == employee_id).first()
+
+    if not employee:
+        return RedirectResponse(url="/leave/manage", status_code=303)
+
+    leaves = (
+        db.query(models.LeaveRequest)
+        .filter(models.LeaveRequest.user_id == employee_id)
+        .order_by(models.LeaveRequest.start_date.desc())
+        .all()
+    )
+
+    return templates.TemplateResponse(
+        "employee_leave_history.html",
         {
             "request": request,
-            "pending": pending,
             "user": user,
+            "employee": employee,
+            "leaves": leaves,
         },
     )
 
@@ -208,6 +213,15 @@ def approve_leave(
 
     if leave:
         leave.status = models.LeaveStatusEnum.approved
+
+        if leave.leave_type == "annual":
+            days = (leave.end_date - leave.start_date).days + 1
+
+            if leave.start_date.month <= 6:
+                leave.user.first_half_used = (leave.user.first_half_used or 0) + days
+            else:
+                leave.user.second_half_used = (leave.user.second_half_used or 0) + days
+
         db.commit()
 
         if leave.user and leave.user.email:
