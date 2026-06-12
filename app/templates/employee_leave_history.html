@@ -6,14 +6,14 @@
         <div>
             <h1 class="text-3xl font-bold">Leave History</h1>
             <p class="text-lg text-base-content/70">
-                Employee: <strong>{{ employee.username }}</strong> 
+                Employee: <strong>{{ employee.username }}</strong>
                 ({{ employee.role.value }})
             </p>
         </div>
         <a href="/leave/manage" class="btn btn-ghost">← Back to Manage Leaves</a>
     </div>
 
-    {% if history %}
+    {% if leaves %}
     <div class="card bg-base-100 shadow-xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="table table-zebra w-full">
@@ -30,7 +30,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for l in history %}
+                {% for l in leaves %}
                     <tr>
                         <td class="font-medium">{{ l.id }}</td>
                         <td>{{ l.leave_type.value | title }}</td>
@@ -39,11 +39,11 @@
                         <td class="font-semibold">{{ (l.end_date - l.start_date).days + 1 }}</td>
                         <td class="max-w-md truncate">{{ l.reason }}</td>
                         <td>
-                            <span class="badge 
-                                {% if l.status == 'approved' %}badge-success
-                                {% elif l.status == 'rejected' %}badge-error
+                            <span class="badge
+                                {% if l.status.value == 'approved' %}badge-success
+                                {% elif l.status.value == 'rejected' %}badge-error
                                 {% else %}badge-warning{% endif %}">
-                                {{ l.status | title }}
+                                {{ l.status.value | title }}
                             </span>
                         </td>
                         <td>{{ l.created_at.strftime('%d %b %Y, %H:%M') if l.created_at else '-' }}</td>

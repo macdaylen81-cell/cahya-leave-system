@@ -27,12 +27,12 @@ def list_my_leaves(
         .all()
     )
 
-    # Calculate working days for display
+    # Calculate working days
     for leave in leaves:
         current = leave.start_date
         working_days = 0
         while current <= leave.end_date:
-            if current.weekday() < 5:   # Monday = 0 ... Friday = 4
+            if current.weekday() < 5:   # Monday to Friday
                 holiday = db.query(models.PublicHoliday).filter(
                     models.PublicHoliday.date == current
                 ).first()
@@ -76,7 +76,6 @@ def request_leave(
     if days <= 0:
         return RedirectResponse(url="/leave/request?error=Invalid+date+range", status_code=303)
 
-    # Annual Leave Logic
     if leave_type == "annual":
         current_year = datetime.today().year
 
@@ -193,25 +192,30 @@ def approve_leave(
     user: models.User = Depends(require_role(models.RoleEnum.manager, models.RoleEnum.admin)),
 ):
     leave = db.query(models.LeaveRequest).get(leave_id)
-    if leave:
-        leave.status = models.LeaveStatusEnum.approved
+    if not leave or leave.status != models.LeaveStatusEnum.pending:
+        return RedirectResponse(url="/leave/manage", status_code=303)
 
-        if leave.leave_type == "annual":
-            days = (leave.end_date - leave.start_date).days + 1
-            if leave.start_date.month <= 6:
-                leave.user.first_half_used = (leave.user.first_half_used or 0) + days
-            else:
-                leave.user.second_half_used = (leave.user.second_half_used or 0) + days
+    leave.status = models.LeaveStatusEnum.approved
+    days = (leave.end_date - leave.start_date).days + 1
 
-        db.commit()
+    if leave.leave_type == "annual":
+        if leave.start_date.month <= 6:
+            leave.user.first_half_used = (leave.user.first_half_used or 0) + days
+        else:
+            leave.user.second_half_used = (leave.user.second_half_used or 0) + days
 
-        if leave.user and leave.user.email:
-            send_email_background(
-                background_tasks,
-                leave.user.email,
-                "Leave Request Approved",
-                f"Your {leave.leave_type.value} leave request has been approved.",
-            )
+        # Update total used
+        leave.user.used_annual_leave = (leave.user.first_half_used or 0) + (leave.user.second_half_used or 0)
+
+    db.commit()
+
+    if leave.user and leave.user.email:
+        send_email_background(
+            background_tasks,
+            leave.user.email,
+            "Leave Request Approved",
+            f"Your {leave.leave_type.value} leave request has been approved.",
+        )
 
     return RedirectResponse(url="/leave/manage", status_code=303)
 
