@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from .database import Base, engine, get_db
 from . import models
 from .deps import get_current_user_dep
-from .routers import auth, totp, leaves, users, overtime, notifications
+from .routers import auth, totp, leaves, users, overtime
 from .security import get_password_hash
 
-# Create tables
+# Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
@@ -18,13 +18,12 @@ app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Include all routers
+# Include routers
 app.include_router(auth.router)
 app.include_router(totp.router)
 app.include_router(leaves.router)
 app.include_router(users.router)
 app.include_router(overtime.router)
-app.include_router(notifications.router)
 
 
 # ====================== DASHBOARD ======================
@@ -41,7 +40,7 @@ def dashboard(
     first_half_remaining = 10 - (user.first_half_used or 0) + (user.carry_forward_days or 0)
     second_half_remaining = 10 - (user.second_half_used or 0)
 
-    # Count requests
+    # Count my requests
     my_pending = db.query(models.LeaveRequest).filter(
         models.LeaveRequest.user_id == user.id,
         models.LeaveRequest.status == models.LeaveStatusEnum.pending
@@ -52,6 +51,7 @@ def dashboard(
         models.LeaveRequest.status == models.LeaveStatusEnum.approved
     ).count()
 
+    # Pending for approval (for manager/admin)
     pending_for_approval = None
     if user.role in (models.RoleEnum.manager, models.RoleEnum.admin):
         pending_for_approval = db.query(models.LeaveRequest).filter(
@@ -93,3 +93,5 @@ def init_admin(db: Session = Depends(get_db)):
     db.add(admin)
     db.commit()
     return {"detail": "✅ Admin created successfully! Username: admin | Password: admin123"}
+
+
