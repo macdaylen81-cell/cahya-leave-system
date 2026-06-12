@@ -1,62 +1,196 @@
-<script>
-    // 3 Minutes
-    let timeLeft = 180;
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Cahya Mata Intelligence Leave Management System" }}</title>
 
-    function updateTimer() {
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-        const timerEl = document.getElementById("session-timer");
+    <script>
+        tailwind.config = {
+            content: ["./**/*.html"],
+            plugins: [require("daisyui")],
+        }
+    </script>
+</head>
 
-        if (!timerEl) return;
+<body class="bg-base-200 min-h-screen">
 
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
+    <!-- Navbar -->
+    <nav class="navbar bg-base-100 shadow-lg">
+        <div class="navbar-start">
+            <a href="/dashboard" class="btn btn-ghost text-2xl font-bold">
+                🏢 Cahya Mata Intelligence
+            </a>
+        </div>
 
-        timerEl.textContent =
-            String(minutes).padStart(2, "0") +
-            ":" +
-            String(seconds).padStart(2, "0");
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1 gap-2">
 
-        // Turn red in last 1 minute
-        if (timeLeft <= 60) {
-            timerEl.classList.remove(
-                "bg-orange-100",
-                "text-orange-700"
-            );
+                <li>
+                    <a href="/dashboard" class="font-medium">
+                        Dashboard
+                    </a>
+                </li>
 
-            timerEl.classList.add(
-                "bg-red-100",
-                "text-red-700"
-            );
+                <li>
+                    <a href="/leave/" class="font-medium">
+                        My Leaves
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/leave/request" class="font-medium">
+                        Request Leave
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/overtime/" class="font-medium">
+                        My Overtime
+                    </a>
+                </li>
+
+                {% if user and (user.role.value == 'manager' or user.role.value == 'admin') %}
+                <li>
+                    <a href="/leave/manage" class="font-medium">
+                        Manage Leaves
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/overtime/manage" class="font-medium">
+                        Manage Overtime
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user and user.role.value == 'admin' %}
+                <li>
+                    <a href="/users/" class="font-medium">
+                        👥 Manage Users
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user and (user.role.value == 'hr' or user.role.value == 'admin') %}
+                <li>
+                    <a href="/holidays/" class="font-medium">
+                        🎉 Holidays
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/reports/hr-leaves" class="font-medium">
+                        📊 HR Reports
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if user and not user.is_totp_enabled %}
+                <li>
+                    <a href="/totp/setup" class="font-medium text-orange-500">
+                        🔐 Setup 2FA
+                    </a>
+                </li>
+                {% endif %}
+
+            </ul>
+        </div>
+
+        <div class="navbar-end gap-4 pr-6">
+            {% if user %}
+            <div class="flex items-center gap-3">
+
+                <span class="text-sm">
+                    {{ user.username }}
+                </span>
+
+                <span class="badge badge-primary">
+                    {{ user.role.value }}
+                </span>
+
+                <!-- Session Timer -->
+                <span id="session-timer"
+                    class="text-xs font-mono bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                    30:00
+                </span>
+
+                <a href="/logout" class="btn btn-error btn-sm">
+                    Logout
+                </a>
+
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="max-w-7xl mx-auto p-8">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // 30 Minutes
+        let timeLeft = 180;
+
+        function updateTimer() {
+
+            const timerEl = document.getElementById("session-timer");
+
+            if (!timerEl) return;
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+
+            timerEl.textContent =
+                String(minutes).padStart(2, "0") +
+                ":" +
+                String(seconds).padStart(2, "0");
+
+            if (timeLeft <= 300) {
+                timerEl.classList.remove(
+                    "bg-orange-100",
+                    "text-orange-700"
+                );
+
+                timerEl.classList.add(
+                    "bg-red-100",
+                    "text-red-700"
+                );
+            }
+
+            if (timeLeft <= 0) {
+                window.location.href = "/logout";
+            } else {
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            }
         }
 
-        if (timeLeft <= 0) {
-            window.location.href = "/logout";
-        } else {
-            timeLeft--;
-            setTimeout(updateTimer, 1000);
+        window.onload = function () {
+            updateTimer();
+        };
+
+        function preventBack() {
+            window.history.forward();
         }
-    }
 
-    // Start countdown
-    window.onload = function () {
-        updateTimer();
-    };
+        setTimeout(preventBack, 0);
 
-    // Prevent back button after logout
-    function preventBack() {
-        window.history.forward();
-    }
+        window.onunload = function () {
+            null;
+        };
 
-    setTimeout(preventBack, 0);
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
 
-    window.onunload = function () {
-        null;
-    };
-
-    // Force reload if user presses back button
-    window.addEventListener("pageshow", function (event) {
-        if (event.persisted) {
-            window.location.reload();
-        }
-    });
-</script>
+</body>
+</html>
