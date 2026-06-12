@@ -32,7 +32,7 @@ def list_my_leaves(
         current = leave.start_date
         working_days = 0
         while current <= leave.end_date:
-            if current.weekday() < 5:  # Monday to Friday
+            if current.weekday() < 5:   # Monday = 0 ... Friday = 4
                 holiday = db.query(models.PublicHoliday).filter(
                     models.PublicHoliday.date == current
                 ).first()
@@ -76,7 +76,7 @@ def request_leave(
     if days <= 0:
         return RedirectResponse(url="/leave/request?error=Invalid+date+range", status_code=303)
 
-    # Annual Leave Balance Check
+    # Annual Leave Logic
     if leave_type == "annual":
         current_year = datetime.today().year
 
@@ -180,7 +180,7 @@ def employee_leave_history(
             "request": request,
             "user": user,
             "employee": employee,
-            "leaves": leaves,           
+            "leaves": leaves,
         },
     )
 
