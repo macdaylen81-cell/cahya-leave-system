@@ -17,13 +17,11 @@ app = FastAPI(title="Cahya Mata Intelligence Leave Management System")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Include all routers
 app.include_router(auth.router)
 app.include_router(totp.router)
 app.include_router(leaves.router)
 app.include_router(users.router)
 app.include_router(overtime.router)
-app.include_router(notifications.router)
 
 
 # ====================== ROOT ROUTE (FIXED) ======================
